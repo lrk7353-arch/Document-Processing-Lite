@@ -1,0 +1,127 @@
+# mockServer.ts 说明文档
+
+本文件为前端可运行的 **SSE 模拟服务 (Mock Server)**，用于在开发环境中模拟后端推送事件流与接口响应。  
+路径：`src/mock/mockServer.ts`
+
+---
+
+## 一、文件功能概述
+
+`mockServer.ts` 模拟了后端的两类交互：
+
+1. **Server-Sent Events (SSE)**：通过定时器定期推送事件，实现前端实时监听测试。  
+2. **普通 REST API 调用**：模拟后端返回不同任务流程的 JSON 数据。
+
+---
+
+## 二、核心函数说明
+
+### 1. `startMockSSE(sendEvent: (event: any) => void)`
+
+> 模拟后端持续推送事件的行为。
+
+**功能说明：**
+- 从 `mockData.json` 中读取所有事件流（成功流、模型失败流、合规失败流）。
+- 按照 1 秒间隔依次发送事件。
+- 每个事件通过回调函数 `sendEvent(current)` 传给前端。
+
+**执行流程：**
+```ts
+const allEvents = [
+  ...mockData.successFlow.events,
+  ...mockData.modelFailFlow.events,
+  ...mockData.complianceFailFlow.events,
+];
+
+let index = 0;
+const interval = setInterval(() => {
+  if (index >= allEvents.length) clearInterval(interval);
+  else sendEvent(allEvents[index++]);
+}, 1000);
+```
+
+**参数：**
+| 参数名 | 类型 | 说明 |
+|--------|------|------|
+| sendEvent | `(event: any) => void` | 前端接收单条事件的回调函数 |
+
+**使用场景：**
+- 模拟后端 SSE 推送（如任务进度实时更新、模型处理状态）
+- 测试前端事件流渲染逻辑
+
+---
+
+### 2. `mockApiRequest(endpoint: string)`
+
+> 模拟普通 API 接口响应。
+
+**支持的端点：**
+| Endpoint | 返回内容 |
+|-----------|-----------|
+| `/success` | 模拟完整成功任务流程 |
+| `/modelFail` | 模拟模型提取阶段失败 |
+| `/complianceFail` | 模拟合规检查阶段失败 |
+
+**示例代码：**
+```ts
+const data = await mockApiRequest("/success");
+console.log(data); // 返回 mockData.successFlow
+```
+
+**异常处理：**
+当传入未知 endpoint 时，会抛出错误：
+```ts
+throw new Error("Unknown endpoint");
+```
+
+---
+
+## 三、依赖与数据源
+
+- 依赖文件：`mockData.json`  
+  包含预定义的三类任务流程：
+  - `successFlow`：完整成功任务
+  - `modelFailFlow`：模型处理阶段失败
+  - `complianceFailFlow`：合规检查失败
+
+示例结构：
+```json
+{
+  "successFlow": {
+    "events": [ { "eventType": "file.upload.start", "timestamp": 1698820000, ... } ]
+  },
+  "modelFailFlow": { "events": [...] },
+  "complianceFailFlow": { "events": [...] }
+}
+```
+
+---
+
+## 四、运行机制说明
+
+| 阶段 | 行为 | 说明 |
+|------|------|------|
+| 初始化 | 载入 mockData.json | 读取所有模拟事件 |
+| 推送循环 | 每秒触发一次 sendEvent | 模拟后端 SSE |
+| 终止条件 | 所有事件推送完成 | 清除 interval |
+
+---
+
+## 五、使用建议
+
+- **前端开发阶段**：用 `startMockSSE()` 替代真实后端 SSE 测试数据流。  
+- **单元测试阶段**：用 `mockApiRequest()` 模拟不同接口返回值。  
+- **集成演示阶段**：可调节推送间隔或事件内容验证前端 UI 响应。
+
+---
+
+## 六、维护说明
+
+- 文件名：`mockServer.ts`
+- 所属模块：`src/mock/`
+- 用途：仅用于开发与演示阶段，生产环境请连接真实后端服务。
+- 维护人：前端架构组 / 模型调度可视化组
+
+---
+
+> © 2025 AG-UI Mock Server for Frontend Simulation. All rights reserved.

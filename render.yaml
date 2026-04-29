@@ -1,0 +1,66 @@
+﻿services:
+  - type: web
+    name: docs-agent-backend
+    runtime: docker
+    rootDir: Backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: WEB_CONCURRENCY
+        value: "1"
+      - key: LOG_RETENTION_DAYS
+        value: "7"
+      - key: ALGORITHM_API_URL
+        value: https://YOUR-ALGORITHM-SERVICE.onrender.com
+      - key: ALGORITHM_SERVICE_TOKEN
+        sync: false
+      - key: ALGORITHM_TIMEOUT
+        value: "120"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
+      - key: SSE_MAX_RETRY_DELAY
+        value: "30000"
+      - key: SSE_HEARTBEAT_INTERVAL
+        value: "30"
+      - key: RETRY_MAX_COUNT
+        value: "3"
+      - key: RETRY_INITIAL_DELAY
+        value: "1"
+      - key: POSTGRES_USER
+        sync: false
+      - key: POSTGRES_PASSWORD
+        sync: false
+      - key: POSTGRES_DB
+        sync: false
+      - key: POSTGRES_HOST
+        sync: false
+      - key: POSTGRES_PORT
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+
+  - type: web
+    name: docs-agent-algorithm
+    runtime: docker
+    rootDir: Algorithm
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: DEBUG_MODE
+        value: "false"
+      - key: TESSERACT_CMD
+        value: /usr/bin/tesseract
+      - key: SERVICE_TOKEN
+        sync: false

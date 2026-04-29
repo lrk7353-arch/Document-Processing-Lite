@@ -1,0 +1,114 @@
+# AG-UI 智能体系统事件类型定义
+
+本文件定义了基于 **AG-UI 协议** 的前端事件类型，用于统一前后端通信数据结构与事件分发。  
+路径：`src/types/agui.d.ts`
+
+---
+
+## 一、核心结构
+
+### `AgUiBaseEvent<T>`
+所有事件的基础结构，包含：
+- `eventId`：事件唯一 ID
+- `eventType`：事件类型（如 `file.upload.start`）
+- `timestamp`：事件触发时间（Unix 时间戳）
+- `data`：事件载荷，随具体事件类型变化
+- `status`：事件状态（可选，如 `success` / `error`）
+
+---
+
+## 二、事件类型分类
+
+### 1. 文件上传事件
+| 事件类型 | 接口名 | 状态 |
+|-----------|----------|--------|
+| 文件上传开始 | `FileUploadStartEvent` | init |
+| 文件上传中 | `FileUploadProgressEvent` | uploading |
+| 文件上传完成 | `FileUploadCompleteEvent` | file_received / upload_verifying |
+| 文件上传失败 | `FileUploadErrorEvent` | upload_failed |
+
+### 2. 文件处理与模型调度事件
+涵盖文件解析、模型调用、结果提取全过程。  
+包括：`FileProcessStartEvent`、`ModelDispatchStartEvent`、`ModelExtractCompleteEvent` 等。
+
+### 3. 合规检查事件
+包括规则检查开始、进度、完成及错误事件。  
+如：`ComplianceCheckStartEvent`、`ComplianceCheckProgressEvent`。
+
+### 4. 任务进度与结果事件
+描述整个任务流程的汇总状态：  
+如：`TaskTotalProgressEvent`、`TaskCompleteEvent`、`TaskErrorEvent`。
+
+---
+
+## 三、聚合类型导出
+
+统一类型定义：
+```ts
+export type AgUiEvent =
+  | FileUploadStartEvent
+  | FileUploadProgressEvent
+  | FileUploadCompleteEvent
+  | FileUploadErrorEvent
+  | FileProcessStartEvent
+  | FileProcessProgressEvent
+  | ModelDispatchStartEvent
+  | ModelProcessProgressEvent
+  | ModelExtractCompleteEvent
+  | ModelCallErrorEvent
+  | ComplianceCheckStartEvent
+  | ComplianceCheckProgressEvent
+  | ComplianceCheckCompleteEvent
+  | ComplianceCheckErrorEvent
+  | TaskTotalProgressEvent
+  | TaskCompleteEvent
+  | TaskErrorEvent;
+```
+
+---
+
+## 四、状态机与通信机制
+
+### 状态机（TaskState）
+```ts
+interface TaskState {
+  taskId: string;
+  status: "idle" | "uploading" | "processing" | "analyzing" | "checking" | "success" | "error";
+  progress: number;
+  currentStep: string;
+  logs: string[];
+  data?: Record<string, any>;
+}
+```
+
+### 通信机制（SSE）
+用于与后端的实时事件流通信：
+```ts
+interface SSEMessage {
+  id?: string;
+  event?: string;
+  data: string; // JSON 序列化的 BaseEvent
+}
+type SSEConnectionStatus = "connecting" | "open" | "closed" | "error";
+```
+
+---
+
+## 五、应用场景
+
+- **文件上传/分析平台**：统一事件驱动流程状态更新。
+- **AI 智能体系统**：可根据事件类型动态渲染进度与日志。
+- **多模型调度平台**：支持模型调用与合规检查的实时跟踪。
+
+---
+
+## 六、维护说明
+
+- 文件名：`agui.d.ts`
+- 所属模块：`src/types/`
+- 用途：仅类型定义与协议文档，不包含逻辑实现。
+- 维护人：前端架构组 / 智能体交互组
+
+---
+
+> © 2025 AG-UI Protocol Type Definition. All rights reserved.

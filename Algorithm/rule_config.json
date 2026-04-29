@@ -1,0 +1,333 @@
+{
+  "global": {
+    "max_name_length": 100,
+    "min_positive": 0.01,
+    "allowed_date_formats": ["%Y-%m-%d", "%Y/%m/%d", "%Y%m%d"],
+    "invoice_no_regex": "^[A-Z0-9\\-_]+$"
+  },
+  "header_mapping": {
+  "INVOICE_NO": "invoice_no", 
+  "INVOICE_DATE": "date",        
+  "BUYER": "buyer_name",  
+  "SELLER": "seller_name",      
+  "DESCRIPTION": "description", 
+  "QUANTITY": "quantity",        
+  "UNIT_PRICE": "unit_price",    
+  "TOTAL_AMOUNT": "total_amount" 
+},
+  "history_invoice_numbers": [],
+  "scoring": {
+    "deductions": {
+      "required": 20,
+      "format": 15,
+      "logic": 30,
+      "duplicate_history": 40,
+      "numeric_format": 15,
+      "warning_large_qty": 5,
+      "warning_total_diff": 3,
+      "warning_in_file_dup": 8
+    },
+    "patterns": {
+      "missing": ["缺失", "空值", "为空字符串", "为仅空白"],
+      "format": ["格式错误", "类型错误", "无法解析为数值", "类型不受支持", "小数位超过", "无法解析为日期"],
+      "logic": ["逻辑不一致", "不一致", "逻辑", "超出当前日期", "非法"],
+      "duplicate_history": ["历史数据重复", "与历史数据重复", "发票号码重复"]
+    },
+    "confidence_thresholds": {
+      "high": [90, 100],
+      "medium": [70, 89],
+      "low": [40, 69],
+      "very_low": [0, 39]
+    }
+  },
+  "fields": {
+    "invoice_no": [
+      {
+        "rule_id": "invoice_no_required",
+        "rule_type": "required",
+        "error_msg": "发票号码缺失或空值",
+        "severity": "error",
+        "priority": 10
+      },
+      {
+        "rule_id": "invoice_no_format",
+        "rule_type": "regex",
+        "params": {
+          "pattern": "${global.invoice_no_regex}"
+        },
+        "error_msg": "发票号码格式错误：仅允许字母/数字/-/_（将统一转为大写）",
+        "severity": "error",
+        "priority": 20
+      },
+      {
+        "rule_id": "invoice_no_dup_history",
+        "rule_type": "duplicate",
+        "params": {
+          "scope": "history"
+        },
+        "error_msg": "发票号码重复：{field}（与历史数据重复）",
+        "severity": "error",
+        "priority": 30
+      },
+      {
+        "rule_id": "invoice_no_dup_file",
+        "rule_type": "duplicate",
+        "params": {
+          "scope": "file"
+        },
+        "error_msg": "本文件内发票号重复：{field}",
+        "severity": "warning",
+        "priority": 40
+      }
+    ],
+    "date": [
+      {
+        "rule_id": "date_required",
+        "rule_type": "required",
+        "error_msg": "日期(date) 缺失或空值",
+        "severity": "error",
+        "priority": 10
+      },
+      {
+        "rule_id": "date_range_valid",
+        "rule_type": "date_range",
+        "params": {
+          "min": "1900-01-01",
+          "max": "2099-12-31"
+        },
+        "error_msg": "日期(date) 不在允许范围: {min} - {max}",
+        "severity": "error",
+        "priority": 20
+      },
+      {
+        "rule_id": "date_not_future",
+        "rule_type": "logic",
+        "params": {
+          "expression": "date_parsed is not None and date_parsed <= datetime.utcnow().date()"
+        },
+        "error_msg": "日期(date) 非法：日期超出当前日期",
+        "severity": "error",
+        "priority": 25
+      }
+    ],
+    "buyer_name": [
+      {
+        "rule_id": "buyer_required",
+        "rule_type": "required",
+        "error_msg": "买方名称缺失或空值",
+        "severity": "error",
+        "priority": 10
+      },
+      {
+        "rule_id": "buyer_name_length",
+        "rule_type": "length",
+        "params": {
+          "max": "${global.max_name_length}"
+        },
+        "error_msg": "买方名称长度超过 {max} 字符",
+        "severity": "error",
+        "priority": 20
+      },
+      {
+        "rule_id": "buyer_prohibited_chars",
+        "rule_type": "prohibited_chars",
+        "params": {
+          "chars": ["！", "？", "\\n", "\\r", "\\t"]
+        },
+        "error_msg": "买方名称含有非法字符：{chars}",
+        "severity": "error",
+        "priority": 30
+      }
+    ],
+    "seller_name": [
+      {
+        "rule_id": "seller_required",
+        "rule_type": "required",
+        "error_msg": "卖方名称缺失或空值",
+        "severity": "error",
+        "priority": 10
+      },
+      {
+        "rule_id": "seller_name_length",
+        "rule_type": "length",
+        "params": {
+          "max": "${global.max_name_length}"
+        },
+        "error_msg": "卖方名称长度超过 {max} 字符",
+        "severity": "error",
+        "priority": 20
+      },
+      {
+        "rule_id": "seller_prohibited_chars",
+        "rule_type": "prohibited_chars",
+        "params": {
+          "chars": ["！", "？", "\\n", "\\r", "\\t"]
+        },
+        "error_msg": "卖方名称含有非法字符：{chars}",
+        "severity": "error",
+        "priority": 30
+      },
+      {
+        "rule_id": "buyer_seller_same",
+        "rule_type": "logic",
+        "params": {
+          "expression": "buyer_name is not None and seller_name is not None and buyer_name.strip() == seller_name.strip()"
+        },
+        "error_msg": "买方名称与卖方名称相同（买方名称 ≠ 卖方名称）",
+        "severity": "error",
+        "priority": 35
+      },
+      {
+        "rule_id": "buyer_seller_similarity_warning",
+        "rule_type": "similarity",
+        "params": {
+          "other_field": "buyer_name",
+          "max_distance": 2,
+          "max_length_diff": 3
+        },
+        "error_msg": "买卖双方名称相似（编辑距离≤{max_distance}，长度差≤{max_length_diff}），请确认是否为同一实体：buyer='{other_field}' seller='{field}'",
+        "severity": "warning",
+        "priority": 36
+      }
+    ],
+    "description": [
+      {
+        "rule_id": "desc_length",
+        "rule_type": "length",
+        "params": {
+          "max": "${global.max_name_length}"
+        },
+        "error_msg": "货物描述长度超过 {max} 字符",
+        "severity": "error",
+        "priority": 20
+      },
+      {
+        "rule_id": "desc_prohibited_chars",
+        "rule_type": "prohibited_chars",
+        "params": {
+          "chars": ["！", "？", "\\n", "\\r", "\\t"]
+        },
+        "error_msg": "货物描述含有非法字符：{chars}",
+        "severity": "error",
+        "priority": 30
+      }
+    ],
+    "quantity": [
+      {
+        "rule_id": "quantity_required",
+        "rule_type": "required",
+        "error_msg": "数量缺失或空值",
+        "severity": "error",
+        "priority": 10
+      },
+      {
+        "rule_id": "quantity_positive",
+        "rule_type": "range",
+        "params": {
+          "min": "${global.min_positive}"
+        },
+        "error_msg": "数量必须为正且 ≥{min}",
+        "severity": "error",
+        "priority": 20
+      },
+      {
+        "rule_id": "quantity_decimal_places",
+        "rule_type": "decimal_places",
+        "params": {
+          "max_places": 4
+        },
+        "error_msg": "数量小数位超过 {max_places} 位",
+        "severity": "error",
+        "priority": 25
+      },
+      {
+        "rule_id": "quantity_large_warning",
+        "rule_type": "range",
+        "params": {
+          "max": 1000000
+        },
+        "error_msg": "数量异常偏大（>{max}），请确认合理性",
+        "severity": "warning",
+        "priority": 100
+      }
+    ],
+    "unit_price": [
+      {
+        "rule_id": "unit_price_required",
+        "rule_type": "required",
+        "error_msg": "单价缺失或空值",
+        "severity": "error",
+        "priority": 10
+      },
+      {
+        "rule_id": "unit_price_positive",
+        "rule_type": "range",
+        "params": {
+          "min": "${global.min_positive}"
+        },
+        "error_msg": "单价(unit_price) 必须为正且 ≥ {min}",
+        "severity": "error",
+        "priority": 20
+      },
+      {
+        "rule_id": "unit_price_decimal_places",
+        "rule_type": "decimal_places",
+        "params": {
+          "max_places": 2
+        },
+        "error_msg": "单价小数位超过 {max_places} 位",
+        "severity": "error",
+        "priority": 30
+      }
+    ],
+    "total_amount": [
+      {
+        "rule_id": "total_required",
+        "rule_type": "required",
+        "error_msg": "总金额缺失或空值",
+        "severity": "error",
+        "priority": 10
+      },
+      {
+        "rule_id": "total_positive",
+        "rule_type": "range",
+        "params": {
+          "min": "${global.min_positive}"
+        },
+        "error_msg": "总金额(total_amount) 必须为正且 ≥ {min}",
+        "severity": "error",
+        "priority": 20
+      },
+      {
+        "rule_id": "total_decimal_places",
+        "rule_type": "decimal_places",
+        "params": {
+          "max_places": 2
+        },
+        "error_msg": "总金额小数位超过 {max_places} 位",
+        "severity": "error",
+        "priority": 30
+      },
+      {
+        "rule_id": "total_logic_check",
+        "rule_type": "logic",
+        "params": {
+          "expression": "total_amount is not None and quantity is not None and unit_price is not None and ( (total_amount - (quantity * unit_price)).copy_abs() <= Decimal('0.01') or total_amount <= (quantity * unit_price * Decimal('1.1')) )"
+        },
+        "error_msg": "总金额逻辑不一致：total_amount={total_amount}，quantity×unit_price 校验未通过",
+        "severity": "error",
+        "priority": 50
+      },
+      {
+        "rule_id": "total_logic_warning",
+        "rule_type": "logic",
+        "params": {
+          "expression": "total_amount is not None and quantity is not None and unit_price is not None and ( (total_amount - (quantity * unit_price)).copy_abs() > Decimal('0.01') and total_amount <= (quantity * unit_price * Decimal('1.1')) )"
+        },
+        "error_msg": "总金额与数量×单价存在差异（差值超出±0.01，但仍在允许的上限10%内）",
+        "severity": "warning",
+        "priority": 49
+      }
+    ]
+  }
+}

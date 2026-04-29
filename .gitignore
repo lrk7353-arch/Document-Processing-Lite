@@ -1,0 +1,48 @@
+﻿# Secrets
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build/cache
+dist/
+.vite/
+*.tsbuildinfo
+
+# Runtime data
+logs/
+uploads/
+startup_log*.txt
+*.log
+
+# OS / IDE
+.DS_Store
+__MACOSX/
+.idea/
+.vscode/
+.trae/
+.claude/
+.agents/
+skills/
+skills-lock.json
+.vercel/
+
+# Training artifacts intentionally excluded from lite deploy
+Algorithm/model_5/
+Algorithm/model_6_focus/checkpoint-*/
+Algorithm/**/optimizer.pt
+Algorithm/**/scheduler.pt
+Algorithm/**/rng_state.pth

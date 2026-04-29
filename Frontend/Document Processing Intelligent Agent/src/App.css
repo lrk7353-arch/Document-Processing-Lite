@@ -1,0 +1,64 @@
+/* ===== 基础容器：改成全宽，不再居中 ===== */
+html, body, #root { height: 100%; }
+#root {
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  text-align: initial;
+  background: #f8fafc; /* 近似 Tailwind gray-50 */
+}
+
+/* ===== 保留 Vite 默认 .logo 动效（如不需要可删除） ===== */
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover { filter: drop-shadow(0 0 2em #646cffaa); }
+.logo.react:hover { filter: drop-shadow(0 0 2em #61dafbaa); }
+
+@keyframes logo-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo { animation: logo-spin infinite 20s linear; }
+}
+
+.card { padding: 2em; }
+.read-the-docs { color: #888; }
+
+/* ===== DocSmartPage 视觉令牌 & 辅助类（新加） ===== */
+:root{
+  --brand:#1E64E5;
+  --brand-600:#1653C9;
+}
+
+.text-primary{ color:var(--brand); }
+.bg-primary{ background:var(--brand); }
+
+/* 渐变进度条、通用卡片阴影 */
+.progress-gradient{ background: linear-gradient(90deg,#1E64E5,#7C3AED); }
+.card-shadow{ box-shadow: 0 6px 24px rgba(16,24,40,.06); }
+
+/* 步骤圆点状态 */
+.state-active{ background:#1E64E5; color:#fff; }
+.state-success{ background:#10B981; color:#fff; }
+.state-pending{ background:#E5E7EB; color:#6B7280; }
+
+/* 状态色 */
+.text-success{ color:#10B981; }
+.text-danger{  color:#EF4444; }
+.text-warning{ color:#F59E0B; }
+.bg-success{   background:#10B981; }
+.border-warning{ border-color:#F59E0B; }
+
+/* 细节手感 */
+.transition-all-300{ transition: all .3s ease; }
+
+/* ===== 兼容性兜底（若 Tailwind 没有这些类也能用） ===== */
+/* aspect-ratio 3/4（Tailwind 有则不影响） */
+.aspect-3\/4 { aspect-ratio: 3 / 4; }
+/* 背景的 50% 透明中性色（对应 bg-neutral-light/50 的占位） */
+.bg-neutral-light\/50 { background: rgba(243,244,246,0.5); } /* 近似 gray-100 with 50% */

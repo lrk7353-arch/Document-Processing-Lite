@@ -1,0 +1,10 @@
+﻿__pycache__/
+*.py[cod]
+*.log
+startup_log.txt
+.env
+model_5/
+model_6_focus/checkpoint-*/
+.idea/
+.vscode/
+.pytest_cache/

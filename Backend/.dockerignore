@@ -1,0 +1,11 @@
+﻿__pycache__/
+*.py[cod]
+*.log
+logs/
+uploads/
+agent/logs/
+agent/uploads/
+.env
+.idea/
+.vscode/
+.pytest_cache/

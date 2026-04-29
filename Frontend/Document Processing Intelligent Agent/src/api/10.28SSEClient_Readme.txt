@@ -1,0 +1,146 @@
+# sseClient.ts 说明文档
+
+本文件为前端 **SSE 客户端模块**，用于管理前端与后端（或 mockServer）的事件流连接。  
+路径：`src/api/sseClient.ts`
+
+---
+
+## 一、文件功能概述
+
+`sseClient.ts` 封装了前端与服务端之间的 **Server-Sent Events (SSE)** 通信逻辑：
+
+- 建立 SSE 长连接并监听后端事件。  
+- 解析事件数据并触发回调函数。  
+- 处理连接状态变化与异常自动关闭。  
+- 可与 `agui.d.ts` 中的类型系统无缝配合。
+
+---
+
+## 二、核心函数说明
+
+### 1. `connectSSE(url, onEvent, onStatusChange?)`
+
+> 建立与后端的 SSE 实时连接。
+
+**函数签名：**
+```ts
+function connectSSE(
+  url: string,
+  onEvent: (event: AGUI.Event) => void,
+  onStatusChange?: (status: AGUI.SSEConnectionStatus) => void
+): EventSource
+```
+
+**参数说明：**
+| 参数名 | 类型 | 说明 |
+|--------|------|------|
+| `url` | `string` | SSE 服务端地址（如 `http://localhost:3000/sse`） |
+| `onEvent` | `(event: AGUI.Event) => void` | 收到新事件时的回调 |
+| `onStatusChange` | `(status: AGUI.SSEConnectionStatus) => void` | （可选）连接状态变化回调 |
+
+**工作流程：**
+1. 若已有旧连接则先关闭，防止重复连接。
+2. 创建新的 `EventSource` 实例。
+3. 监听以下事件：
+   - `onopen` → 连接建立，状态设为 `"open"`。
+   - `onmessage` → 接收并解析服务端推送的事件数据。
+   - `onerror` → 捕获异常，关闭连接并标记 `"error"` 状态。
+
+**事件处理逻辑：**
+```ts
+eventSource.onmessage = (msg) => {
+  const raw = {
+    data: msg.data,
+    id: (msg as any).lastEventId,
+    event: (msg as any).type,
+  };
+  const parsed = JSON.parse(raw.data) as AGUI.Event;
+  onEvent(parsed);
+};
+```
+
+**状态回调：**
+> 状态类型来自 `AGUI.SSEConnectionStatus`，包括：  
+> `"connecting" | "open" | "closed" | "error"`
+
+**返回值：**
+- `EventSource` 实例，用于后续关闭或监听。
+
+---
+
+### 2. `disconnectSSE()`
+
+> 主动断开当前 SSE 连接。
+
+**函数签名：**
+```ts
+function disconnectSSE(): void
+```
+
+**行为描述：**
+- 关闭 `EventSource` 实例并清理引用。
+- 控制台输出：`🔌 SSE 连接已断开`。
+
+---
+
+## 三、使用示例
+
+### 1. 与 mockServer 配合使用
+```ts
+import { connectSSE, disconnectSSE } from "@/api/sseClient";
+import { startMockSSE } from "@/mock/mockServer";
+
+startMockSSE((mockEvent) => {
+  console.log("模拟事件:", mockEvent);
+});
+
+connectSSE("http://localhost:3000/sse", (event) => {
+  console.log("接收到事件:", event);
+}, (status) => {
+  console.log("连接状态:", status);
+});
+```
+
+### 2. 与真实后端服务连接
+```ts
+connectSSE("/api/sse", handleServerEvent, handleStatusChange);
+```
+
+---
+
+## 四、状态管理与容错机制
+
+| 场景 | 行为 | 说明 |
+|------|------|------|
+| 重复调用 connectSSE | 自动关闭旧连接 | 防止资源泄漏 |
+| 后端断开连接 | 触发 onerror | 状态回调为 `"error"` |
+| 数据格式错误 | 捕获异常，不影响后续事件 | 防止 JSON 解析失败中断 |
+
+---
+
+## 五、与 agui.d.ts 的配合
+
+`AGUI.Event` 和 `AGUI.SSEMessage` 提供类型约束：  
+确保 SSE 推送的数据结构与后端协议一致：
+```ts
+interface SSEMessage {
+  id?: string;
+  event?: string;
+  data: string;
+}
+type SSEConnectionStatus = "connecting" | "open" | "closed" | "error";
+```
+
+---
+
+## 六、维护说明
+
+- 文件名：`sseClient.ts`
+- 所属模块：`src/api/`
+- 用途：前端 SSE 客户端通信层封装
+- 依赖类型：`AGUI`（定义于 `src/types/agui.d.ts`）
+- 维护人：前端架构组 / 通信协议组
+
+---
+
+> © 2025 AG-UI SSE Client Module. All rights reserved.
