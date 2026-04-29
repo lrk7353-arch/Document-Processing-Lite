@@ -10,7 +10,6 @@ langchain-core==0.2.3
 # Database
 sqlalchemy==2.0.30
 psycopg2-binary==2.9.9
-pydantic-sqlalchemy==0.0.9
 
 # Data validation
 pydantic>=2.7.4,<3.0.0
